@@ -1,0 +1,939 @@
+import React, { useState } from 'react';
+import { DollarSign, Calculator, FileText, Shield, Clock, CheckCircle, Upload, X, Twitter, ArrowRight, ArrowLeft } from 'lucide-react';
+
+export default function StonegateCapital() {
+  const [activeTab, setActiveTab] = useState('home');
+  const [loanAmount, setLoanAmount] = useState(5000);
+  const [loanTerm, setLoanTerm] = useState(12);
+  const [loanType, setLoanType] = useState('personal');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    // Step 1: Personal Info
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    ssn: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    
+    // Step 2: Loan Details
+    loanType: 'personal',
+    loanAmount: '',
+    loanPurpose: '',
+    loanTerm: '',
+    
+    // Step 3: Employment & Income
+    employmentStatus: '',
+    employer: '',
+    monthlyIncome: '',
+    additionalIncome: '',
+    
+    // Step 4: Documents
+    idDocument: null,
+    proofOfIncome: null,
+    proofOfAddress: null
+  });
+
+  const [uploadedFiles, setUploadedFiles] = useState({
+    idDocument: null,
+    proofOfIncome: null,
+    proofOfAddress: null
+  });
+
+  const interestRate = loanType === 'personal' ? 8.5 : 6.5;
+  const monthlyPayment = (loanAmount * (interestRate / 100 / 12) * Math.pow(1 + (interestRate / 100 / 12), loanTerm)) / (Math.pow(1 + (interestRate / 100 / 12), loanTerm) - 1);
+  const totalPayment = monthlyPayment * loanTerm;
+  const totalInterest = totalPayment - loanAmount;
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleFileUpload = (e, documentType) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedFiles({
+        ...uploadedFiles,
+        [documentType]: file
+      });
+      setFormData({
+        ...formData,
+        [documentType]: file
+      });
+    }
+  };
+
+  const removeFile = (documentType) => {
+    setUploadedFiles({
+      ...uploadedFiles,
+      [documentType]: null
+    });
+    setFormData({
+      ...formData,
+      [documentType]: null
+    });
+  };
+
+  const validateStep = (step) => {
+    switch(step) {
+      case 1:
+        return formData.firstName && formData.lastName && formData.email && 
+               formData.phone && formData.dateOfBirth && formData.ssn && 
+               formData.address && formData.city && formData.state && formData.zipCode;
+      case 2:
+        return formData.loanType && formData.loanAmount && 
+               formData.loanPurpose && formData.loanTerm;
+      case 3:
+        return formData.employmentStatus && formData.employer && formData.monthlyIncome;
+      case 4:
+        return uploadedFiles.idDocument && uploadedFiles.proofOfIncome && 
+               uploadedFiles.proofOfAddress && agreedToTerms;
+      default:
+        return false;
+    }
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      alert('Please fill in all required fields before continuing.');
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleSubmit = () => {
+    if (validateStep(4)) {
+      setSubmitted(true);
+    } else {
+      alert('Please complete all requirements before submitting.');
+    }
+  };
+
+  const ProgressBar = () => (
+    <div className="mb-8">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-medium text-gray-700">Step {currentStep} of 4</span>
+        <span className="text-sm text-gray-500">{Math.round((currentStep / 4) * 100)}% Complete</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div 
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+          style={{ width: `${(currentStep / 4) * 100}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span className="text-2xl font-bold text-gray-900">Stonegate Capital</span>
+                <p className="text-xs text-gray-500">Structured Loan Funding</p>
+              </div>
+            </div>
+            <nav className="hidden md:flex space-x-8">
+              <button onClick={() => setActiveTab('home')} className={`${activeTab === 'home' ? 'text-blue-600' : 'text-gray-600'} hover:text-blue-600 font-medium transition`}>Home</button>
+              <button onClick={() => setActiveTab('calculator')} className={`${activeTab === 'calculator' ? 'text-blue-600' : 'text-gray-600'} hover:text-blue-600 font-medium transition`}>Calculator</button>
+              <button onClick={() => {setActiveTab('apply'); setCurrentStep(1); setSubmitted(false);}} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow-md">
+                Apply Now
+              </button>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Home Page */}
+      {activeTab === 'home' && (
+        <div>
+          {/* Hero Section */}
+          <div className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 text-white overflow-hidden">
+            <div className="absolute inset-0 bg-black opacity-10"></div>
+            <div className="relative max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
+              <div className="text-center">
+                <h1 className="text-5xl md:text-6xl font-bold mb-6">Your Financial Partner for Growth</h1>
+                <p className="text-xl md:text-2xl mb-4 text-blue-100">Personal and business loans tailored to your needs</p>
+                <p className="text-lg mb-8 text-blue-200">Loans from $1,000 to $50,000 with competitive rates</p>
+                <button onClick={() => {setActiveTab('apply'); setCurrentStep(1);}} className="bg-white text-blue-600 px-10 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition shadow-xl transform hover:scale-105 inline-flex items-center">
+                  Get Started Today
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="bg-white py-6 border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-blue-600">$50M+</p>
+                  <p className="text-gray-600">Loans Funded</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-blue-600">5,000+</p>
+                  <p className="text-gray-600">Happy Customers</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-blue-600">4.9/5</p>
+                  <p className="text-gray-600">Customer Rating</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
+            <h2 className="text-4xl font-bold text-center mb-4">Why Choose Stonegate Capital?</h2>
+            <p className="text-center text-gray-600 mb-12 text-lg">We make borrowing simple, fast, and transparent</p>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition text-center">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Fast Approval</h3>
+                <p className="text-gray-600">Get approved in as little as 24 hours with our streamlined process</p>
+              </div>
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition text-center">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Bank-Level Security</h3>
+                <p className="text-gray-600">Your data is protected with 256-bit encryption and secure servers</p>
+              </div>
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition text-center">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Flexible Terms</h3>
+                <p className="text-gray-600">Choose repayment terms from 6 to 60 months that fit your budget</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Loan Types */}
+          <div className="bg-gray-100 py-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-4xl font-bold text-center mb-12">Our Loan Products</h2>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="bg-white p-10 rounded-xl shadow-lg border-2 border-transparent hover:border-blue-600 transition">
+                  <h3 className="text-3xl font-bold mb-4 text-blue-600">Personal Loans</h3>
+                  <p className="text-gray-600 mb-6">Perfect for debt consolidation, home improvements, or unexpected expenses</p>
+                  <ul className="space-y-3 text-gray-700">
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> $1,000 - $35,000</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> 6.5% - 10.5% APR</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> 6 to 60 month terms</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> No collateral required</li>
+                  </ul>
+                </div>
+                <div className="bg-white p-10 rounded-xl shadow-lg border-2 border-transparent hover:border-blue-600 transition">
+                  <h3 className="text-3xl font-bold mb-4 text-blue-600">Business Loans</h3>
+                  <p className="text-gray-600 mb-6">Fuel your business growth with flexible funding solutions</p>
+                  <ul className="space-y-3 text-gray-700">
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> $5,000 - $50,000</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> 5.5% - 9.5% APR</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> 12 to 60 month terms</li>
+                    <li className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-3" /> Flexible requirements</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-16">
+            <div className="max-w-4xl mx-auto text-center px-4">
+              <h2 className="text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
+              <p className="text-xl text-blue-100 mb-8">Apply now and get a decision within 24 hours</p>
+              <button onClick={() => {setActiveTab('apply'); setCurrentStep(1);}} className="bg-white text-blue-600 px-10 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition shadow-xl transform hover:scale-105 inline-flex items-center">
+                Apply for a Loan
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calculator Page */}
+      {activeTab === 'calculator' && (
+        <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-xl p-8 md:p-12">
+            <div className="flex items-center mb-8">
+              <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                <Calculator className="w-8 h-8 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold">Loan Calculator</h2>
+                <p className="text-gray-600">Estimate your monthly payments</p>
+              </div>
+            </div>
+            
+            <div className="space-y-8">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Loan Type</label>
+                <select 
+                  value={loanType} 
+                  onChange={(e) => setLoanType(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                >
+                  <option value="personal">Personal Loan</option>
+                  <option value="business">Business Loan</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Loan Amount: <span className="text-blue-600 text-xl">${loanAmount.toLocaleString()}</span>
+                </label>
+                <input 
+                  type="range" 
+                  min="1000" 
+                  max="50000" 
+                  step="1000" 
+                  value={loanAmount}
+                  onChange={(e) => setLoanAmount(Number(e.target.value))}
+                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>$1,000</span>
+                  <span>$50,000</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Loan Term: <span className="text-blue-600 text-xl">{loanTerm} months</span>
+                </label>
+                <input 
+                  type="range" 
+                  min="6" 
+                  max="60" 
+                  step="6" 
+                  value={loanTerm}
+                  onChange={(e) => setLoanTerm(Number(e.target.value))}
+                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>6 months</span>
+                  <span>60 months</span>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 mt-8 border border-blue-200">
+                <h3 className="text-2xl font-bold mb-6 text-gray-800">Your Estimated Payment</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <p className="text-gray-600 text-sm mb-1">Monthly Payment</p>
+                    <p className="text-3xl font-bold text-blue-600">${monthlyPayment.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <p className="text-gray-600 text-sm mb-1">Interest Rate</p>
+                    <p className="text-3xl font-bold text-blue-600">{interestRate}%</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <p className="text-gray-600 text-sm mb-1">Total Interest</p>
+                    <p className="text-xl font-semibold text-gray-700">${totalInterest.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <p className="text-gray-600 text-sm mb-1">Total Payment</p>
+                    <p className="text-xl font-semibold text-gray-700">${totalPayment.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={() => {setActiveTab('apply'); setCurrentStep(1);}} className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-lg transform hover:scale-105 flex items-center justify-center">
+                Apply for This Loan
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Application Page */}
+      {activeTab === 'apply' && (
+        <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-xl p-8 md:p-12">
+            {!submitted ? (
+              <>
+                <div className="flex items-center mb-8">
+                  <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                    <FileText className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold">Loan Application</h2>
+                    <p className="text-gray-600">Complete all steps to submit your application</p>
+                  </div>
+                </div>
+
+                <ProgressBar />
+
+                {/* Step 1: Personal Information */}
+                {currentStep === 1 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Personal Information</h3>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                        <input 
+                          type="text" 
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="John"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                        <input 
+                          type="text" 
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="Doe"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                        <input 
+                          type="email" 
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="john.doe@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                        <input 
+                          type="tel" 
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="(555) 123-4567"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                        <input 
+                          type="date" 
+                          name="dateOfBirth"
+                          value={formData.dateOfBirth}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Social Security Number *</label>
+                        <input 
+                          type="text" 
+                          name="ssn"
+                          value={formData.ssn}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="XXX-XX-XXXX"
+                          maxLength="11"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Street Address *</label>
+                      <input 
+                        type="text" 
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        placeholder="123 Main Street"
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                        <input 
+                          type="text" 
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="New York"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">State *</label>
+                        <input 
+                          type="text" 
+                          name="state"
+                          value={formData.state}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="NY"
+                          maxLength="2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code *</label>
+                        <input 
+                          type="text" 
+                          name="zipCode"
+                          value={formData.zipCode}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                          placeholder="10001"
+                          maxLength="5"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Loan Details */}
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Loan Details</h3>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Loan Type *</label>
+                        <select 
+                          name="loanType"
+                          value={formData.loanType}
+                          onChange={handleInputChange}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        >
+                          <option value="personal">Personal Loan</option>
+                          <option value="business">Business Loan</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Loan Amount *</label>
+                        <input 
+                          type="number" 
+                          name="loanAmount"
+                          value={formData.loanAmount}
+                          onChange={handleInputChange}
+                          min="1000"
+                          placeholder="5000"
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Purpose of Loan *</label>
+                      <input 
+                        type="text" 
+                        name="loanPurpose"
+                        value={formData.loanPurpose}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Debt consolidation, Home improvement, Business expansion"
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Repayment Term *</label>
+                      <select 
+                        name="loanTerm"
+                        value={formData.loanTerm}
+                        onChange={handleInputChange}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                      >
+                        <option value="">Select term</option>
+                        <option value="6">6 months</option>
+                        <option value="12">12 months</option>
+                        <option value="18">18 months</option>
+                        <option value="24">24 months</option>
+                        <option value="36">36 months</option>
+                        <option value="48">48 months</option>
+                        <option value="60">60 months</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Employment & Income */}
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Employment & Income</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Employment Status *</label>
+                      <select 
+                        name="employmentStatus"
+                        value={formData.employmentStatus}
+                        onChange={handleInputChange}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                      >
+                        <option value="">Select status</option>
+                        <option value="employed">Employed Full-time</option>
+                        <option value="self-employed">Self-employed</option>
+                        <option value="part-time">Part-time</option>
+                        <option value="retired">Retired</option>
+                        <option value="unemployed">Unemployed</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Employer Name *</label>
+                      <input 
+                        type="text" 
+                        name="employer"
+                        value={formData.employer}
+                        onChange={handleInputChange}
+                        placeholder="Company Name"
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Income *</label>
+                        <input 
+                          type="number" 
+                          name="monthlyIncome"
+                          value={formData.monthlyIncome}
+                          onChange={handleInputChange}
+                          placeholder="5000"
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Income (Optional)</label>
+                        <input 
+                          type="number" 
+                          name="additionalIncome"
+                          value={formData.additionalIncome}
+                          onChange={handleInputChange}
+                          placeholder="0"
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-600 focus:outline-none transition"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Documents & Consent */}
+                {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Documents & Verification</h3>
+                    
+                    <div className="space-y-4">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-600 transition">
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          ID Document * (Driver's License, Passport, or State ID)
+                        </label>
+                        {!uploadedFiles.idDocument ? (
+                          <label className="flex flex-col items-center cursor-pointer">
+                            <Upload className="w-12 h-12 text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-600">Click to upload or drag and drop</span>
+                            <span className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 10MB</span>
+                            <input 
+                              type="file" 
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileUpload(e, 'idDocument')}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <span className="text-sm font-medium">{uploadedFiles.idDocument.name}</span>
+                            </div>
+                            <button onClick={() => removeFile('idDocument')} className="text-red-600 hover:text-red-700">
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-600 transition">
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          Proof of Income * (Pay stub, Bank statement, or Tax return)
+                        </label>
+                        {!uploadedFiles.proofOfIncome ? (
+                          <label className="flex flex-col items-center cursor-pointer">
+                            <Upload className="w-12 h-12 text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-600">Click to upload or drag and drop</span>
+                            <span className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 10MB</span>
+                            <input 
+                              type="file" 
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileUpload(e, 'proofOfIncome')}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <span className="text-sm font-medium">{uploadedFiles.proofOfIncome.name}</span>
+                            </div>
+                            <button onClick={() => removeFile('proofOfIncome')} className="text-red-600 hover:text-red-700">
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-600 transition">
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          Proof of Address * (Utility bill or Bank statement)
+                        </label>
+                        {!uploadedFiles.proofOfAddress ? (
+                          <label className="flex flex-col items-center cursor-pointer">
+                            <Upload className="w-12 h-12 text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-600">Click to upload or drag and drop</span>
+                            <span className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 10MB</span>
+                            <input 
+                              type="file" 
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileUpload(e, 'proofOfAddress')}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <span className="text-sm font-medium">{uploadedFiles.proofOfAddress.name}</span>
+                            </div>
+                            <button onClick={() => removeFile('proofOfAddress')} className="text-red-600 hover:text-red-700">
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mt-6">
+                      <label className="flex items-start cursor-pointer">
+                        <input 
+                          type="checkbox"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="mt-1 mr-3 w-5 h-5 accent-blue-600"
+                        />
+                        <span className="text-sm text-gray-700">
+                          <strong>I agree and understand that this is a loan that must be repaid.</strong> I have read and agree to the Terms of Service and Privacy Policy. I authorize Stonegate Capital to verify my information and contact me regarding my application.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between mt-8 pt-6 border-t">
+                  {currentStep > 1 && (
+                    <button 
+                      onClick={prevStep}
+                      className="flex items-center px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <ArrowLeft className="w-5 h-5 mr-2" />
+                      Previous
+                    </button>
+                  )}
+                  
+                  {currentStep < 4 ? (
+                    <button 
+                      onClick={nextStep}
+                      className="ml-auto flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
+                    >
+                      Continue
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleSubmit}
+                      className="ml-auto flex items-center px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition shadow-lg"
+                    >
+                      Submit Application
+                      <CheckCircle className="w-5 h-5 ml-2" />
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-16 h-16 text-green-600" />
+                </div>
+                <h3 className="text-3xl font-bold mb-4 text-gray-800">Application Received!</h3>
+                <p className="text-lg text-gray-600 mb-2">
+                  Thank you for choosing Stonegate Capital.
+                </p>
+                <p className="text-gray-600 mb-8">
+                  We've received your application and will review it within 24-48 hours.
+                  You'll receive an email confirmation shortly.
+                </p>
+                <div className="bg-blue-50 p-6 rounded-lg mb-8 max-w-md mx-auto border border-blue-200">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong className="text-blue-600">Application ID:</strong> SG-{Math.floor(Math.random() * 1000000)}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong className="text-blue-600">Submitted:</strong> {new Date().toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-800">What happens next?</h4>
+                  <div className="max-w-md mx-auto text-left space-y-3">
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 rounded-full p-2 mr-3">
+                        <span className="text-blue-600 font-bold text-sm">1</span>
+                      </div>
+                      <p className="text-sm text-gray-600 pt-1">We'll verify your information and documents</p>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 rounded-full p-2 mr-3">
+                        <span className="text-blue-600 font-bold text-sm">2</span>
+                      </div>
+                      <p className="text-sm text-gray-600 pt-1">You'll receive a decision via email within 24-48 hours</p>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 rounded-full p-2 mr-3">
+                        <span className="text-blue-600 font-bold text-sm">3</span>
+                      </div>
+                      <p className="text-sm text-gray-600 pt-1">If approved, funds will be disbursed within 3-5 business days</p>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSubmitted(false);
+                    setCurrentStep(1);
+                    setAgreedToTerms(false);
+                    setFormData({
+                      firstName: '',
+                      lastName: '',
+                      email: '',
+                      phone: '',
+                      dateOfBirth: '',
+                      ssn: '',
+                      address: '',
+                      city: '',
+                      state: '',
+                      zipCode: '',
+                      loanType: 'personal',
+                      loanAmount: '',
+                      loanPurpose: '',
+                      loanTerm: '',
+                      employmentStatus: '',
+                      employer: '',
+                      monthlyIncome: '',
+                      additionalIncome: '',
+                      idDocument: null,
+                      proofOfIncome: null,
+                      proofOfAddress: null
+                    });
+                    setUploadedFiles({
+                      idDocument: null,
+                      proofOfIncome: null,
+                      proofOfAddress: null
+                    });
+                    setActiveTab('home');
+                  }}
+                  className="mt-8 bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
+                >
+                  Return to Home
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white mt-20">
+        <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div className="col-span-2">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="bg-blue-600 p-2 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <span className="text-2xl font-bold">Stonegate Capital</span>
+                  <p className="text-sm text-gray-400">Structured Loan Funding Community</p>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Empowering individuals and businesses with accessible, transparent lending solutions. 
+                Your trusted partner for financial growth.
+              </p>
+              <div className="flex space-x-4">
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition">
+                  <Twitter className="w-5 h-5" />
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-bold mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><a href="#" className="hover:text-white transition">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition">Blog</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-bold mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white transition">Loan Agreement</a></li>
+                <li><a href="#" className="hover:text-white transition">Compliance</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © {new Date().getFullYear()} Stonegate Capital. All rights reserved.
+            </p>
+            <p className="text-gray-500 text-xs mt-2">
+              Licensed lender. Equal opportunity lender. NMLS# 123456789
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
