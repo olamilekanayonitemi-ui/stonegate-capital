@@ -936,4 +936,5 @@ export default function StonegateCapital() {
       </footer>
     </div>
   );
+
 }
